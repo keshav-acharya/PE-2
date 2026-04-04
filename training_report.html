@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RNN Speech Emotion Recognition — Training Report</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+        background:#f4f6fb;color:#333;padding:28px}
+  .container{max-width:980px;margin:0 auto}
+  h1{font-size:26px;font-weight:700;margin-bottom:4px;color:#1a1a2e}
+  .subtitle{color:#666;font-size:14px;margin-bottom:32px}
+  .card{background:#fff;border-radius:14px;padding:26px;
+          box-shadow:0 1px 6px rgba(0,0,0,.07);margin-bottom:26px}
+  h2{font-size:18px;font-weight:600;margin-bottom:16px;color:#222;
+       border-bottom:2px solid #f0f0f0;padding-bottom:10px}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+  .stat{background:#f8f9ff;border:1px solid #e5e8f5;border-radius:10px;
+          padding:18px;text-align:center}
+  .stat .value{font-size:30px;font-weight:700;color:#4361ee}
+  .stat .label{font-size:12px;color:#777;margin-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{background:#f7f8fc;text-align:left;padding:10px 14px;
+       font-weight:600;border-bottom:2px solid #e5e8f5}
+  td{padding:9px 14px;border-bottom:1px solid #f3f4f8}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:500}
+  .good{background:#e6f9ee;color:#1b7a44}
+  .ok{background:#fff8e1;color:#b45a00}
+  .warn{background:#fdecea;color:#9b2020}
+  img{width:100%;border-radius:10px;border:1px solid #eee;margin-top:8px}
+  .arch-box{background:#f8f9ff;border:1px solid #e5e8f5;border-radius:10px;
+              padding:18px;font-size:13px;line-height:1.8;margin-top:8px}
+  .arch-layer{display:flex;justify-content:space-between;align-items:center;
+                padding:7px 14px;border-radius:7px;margin-bottom:6px;font-size:13px}
+  .al-lstm{background:#ede9fe;color:#4c1d95}
+  .al-dense{background:#fef3c7;color:#78350f}
+  .al-out{background:#d1fae5;color:#064e3b}
+  .al-drop{background:#f3f4f6;color:#4b5563}
+  .al-in{background:#dbeafe;color:#1e3a8a}
+  .tip-box{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;
+             padding:18px;margin-top:8px;font-size:14px;line-height:1.8}
+  .tip-box ul{padding-left:22px;margin-top:6px}
+  .tip-box li{margin-bottom:6px}
+  @media(max-width:640px){.stat-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Speech Emotion Recognition — RNN Training Report</h1>
+  <p class="subtitle">
+    Model: Bidirectional LSTM &nbsp;|&nbsp; Dataset: CREMA-D &nbsp;|&nbsp;
+    
+  </p>
+
+  <!-- Key metrics -->
+  <div class="card">
+    <h2>Key results</h2>
+    <div class="stat-grid">
+      <div class="stat"><div class="value">50.8%</div>
+        <div class="label">Test accuracy</div></div>
+      <div class="stat"><div class="value">65.7%</div>
+        <div class="label">Train accuracy</div></div>
+      <div class="stat"><div class="value">55.3%</div>
+        <div class="label">Best val accuracy</div></div>
+      <div class="stat"><div class="value">18</div>
+        <div class="label">Epochs trained</div></div>
+      <div class="stat"><div class="value">7,442</div>
+        <div class="label">Total audio files</div></div>
+      <div class="stat"><div class="value">346,054</div>
+        <div class="label">Model parameters</div></div>
+    </div>
+  </div>
+
+  <!-- Model architecture -->
+  <div class="card">
+    <h2>Model architecture</h2>
+    <p style="font-size:13px;color:#666;margin-bottom:12px">
+      Input shape: (128 timesteps × 40 MFCC features)
+    </p>
+    <div class="al-in arch-layer"><span>Input layer</span>
+      <span>(128, 40)</span></div>
+    <div class="al-lstm arch-layer"><span>Bidirectional LSTM — layer 1</span>
+      <span>128 units × 2 directions = 256 total</span></div>
+    <div class="al-drop arch-layer"><span>Dropout</span>
+      <span>30% of neurons dropped during training</span></div>
+    <div class="al-lstm arch-layer"><span>Bidirectional LSTM — layer 2</span>
+      <span>64 units × 2 directions = 128 total</span></div>
+    <div class="al-drop arch-layer"><span>Dropout</span>
+      <span>30% of neurons dropped during training</span></div>
+    <div class="al-dense arch-layer"><span>Dense hidden layer (ReLU)</span>
+      <span>64 units</span></div>
+    <div class="al-drop arch-layer"><span>Dropout</span>
+      <span>30% of neurons dropped during training</span></div>
+    <div class="al-out arch-layer"><span>Dense output layer (Softmax)</span>
+      <span>6 units — one per emotion</span></div>
+    <div class="arch-box" style="margin-top:12px">
+      <b>Total trainable parameters:</b> 346,054<br>
+      <b>Optimizer:</b> Adam (lr=0.001)<br>
+      <b>Loss function:</b> Categorical Crossentropy<br>
+      <b>Callbacks:</b> EarlyStopping (patience=10) ·
+                       ReduceLROnPlateau (patience=5)
+    </div>
+  </div>
+
+  <!-- Training timeline -->
+  <div class="card">
+    <h2>Training timeline</h2>
+    <table>
+      <thead><tr><th>Step</th><th>Time taken</th></tr></thead>
+      <tbody>
+        <tr><td>Feature extraction (all files)</td><td>70.5s</td></tr>
+        <tr><td>Preprocessing + splitting</td><td>0.8s</td></tr>
+        <tr><td>Model training (18 epochs)</td><td>696.7s</td></tr>
+        <tr><td>Evaluation + report</td><td>43.4s</td></tr>
+        <tr><td><b>Total time</b></td><td><b>813.1s</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Epoch log -->
+  <div class="card">
+    <h2>Epoch-by-epoch log</h2>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Epoch</th><th>Train loss</th><th>Train acc</th>
+                 <th>Val loss</th><th>Val acc</th><th>LR</th><th>Time</th></tr></thead>
+      <tbody><tr><td>1</td><td>1.6703</td><td>0.2573</td><td>1.5743</td><td>0.3236</td><td>1.00e-03</td><td>40.4s</td></tr><tr><td>2</td><td>1.5343</td><td>0.3364</td><td>1.4647</td><td>0.3953</td><td>1.00e-03</td><td>39.7s</td></tr><tr><td>3</td><td>1.4498</td><td>0.3960</td><td>1.3953</td><td>0.4121</td><td>1.00e-03</td><td>37.3s</td></tr><tr><td>4</td><td>1.3798</td><td>0.4364</td><td>1.3507</td><td>0.4502</td><td>1.00e-03</td><td>36.9s</td></tr><tr><td>5</td><td>1.2905</td><td>0.4832</td><td>1.3404</td><td>0.4546</td><td>1.00e-03</td><td>38.0s</td></tr><tr><td>6</td><td>1.2279</td><td>0.5170</td><td>1.3734</td><td>0.4602</td><td>1.00e-03</td><td>37.6s</td></tr><tr><td>7</td><td>1.1353</td><td>0.5543</td><td>1.3422</td><td>0.5129</td><td>1.00e-03</td><td>38.6s</td></tr><tr><td>8</td><td>1.0532</td><td>0.5998</td><td>1.2923</td><td>0.5073</td><td>1.00e-03</td><td>38.4s</td></tr><tr><td>9</td><td>0.9708</td><td>0.6368</td><td>1.3199</td><td>0.5062</td><td>1.00e-03</td><td>39.8s</td></tr><tr><td>10</td><td>0.8726</td><td>0.6753</td><td>1.3101</td><td>0.5409</td><td>1.00e-03</td><td>39.6s</td></tr><tr><td>11</td><td>0.7927</td><td>0.7152</td><td>1.3508</td><td>0.5342</td><td>1.00e-03</td><td>40.0s</td></tr><tr><td>12</td><td>0.6910</td><td>0.7522</td><td>1.4160</td><td>0.5386</td><td>1.00e-03</td><td>38.9s</td></tr><tr><td>13</td><td>0.6292</td><td>0.7763</td><td>1.4019</td><td>0.5532</td><td>1.00e-03</td><td>37.0s</td></tr><tr><td>14</td><td>0.4529</td><td>0.8520</td><td>1.6013</td><td>0.5442</td><td>5.00e-04</td><td>43.3s</td></tr><tr><td>15</td><td>0.3595</td><td>0.8812</td><td>1.7545</td><td>0.5476</td><td>5.00e-04</td><td>38.6s</td></tr><tr><td>16</td><td>0.3176</td><td>0.8964</td><td>1.9872</td><td>0.5386</td><td>5.00e-04</td><td>38.9s</td></tr><tr><td>17</td><td>0.2722</td><td>0.9109</td><td>2.0987</td><td>0.5364</td><td>5.00e-04</td><td>37.0s</td></tr><tr><td>18</td><td>0.2448</td><td>0.9211</td><td>2.1847</td><td>0.5174</td><td>5.00e-04</td><td>36.7s</td></tr></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Per-class performance -->
+  <div class="card">
+    <h2>Performance per emotion</h2>
+    <table>
+      <thead><tr><th>Emotion</th><th>Precision</th><th>Recall</th>
+                 <th>F1-Score</th><th>Test samples</th></tr></thead>
+      <tbody><tr><td><b>Angry</b></td><td>0.660</td><td>0.650</td><td><span class='badge ok'>0.655</span></td><td>254</td></tr><tr><td><b>Disgust</b></td><td>0.468</td><td>0.378</td><td><span class='badge warn'>0.418</span></td><td>254</td></tr><tr><td><b>Fear</b></td><td>0.489</td><td>0.264</td><td><span class='badge warn'>0.343</span></td><td>254</td></tr><tr><td><b>Happy</b></td><td>0.444</td><td>0.439</td><td><span class='badge warn'>0.442</span></td><td>255</td></tr><tr><td><b>Neutral</b></td><td>0.466</td><td>0.606</td><td><span class='badge ok'>0.527</span></td><td>218</td></tr><tr><td><b>Sad</b></td><td>0.508</td><td>0.724</td><td><span class='badge ok'>0.597</span></td><td>254</td></tr><tr><td><b>macro avg</b></td><td>0.506</td><td>0.510</td><td><span class='badge warn'>0.497</span></td><td>1489</td></tr><tr><td><b>weighted avg</b></td><td>0.507</td><td>0.508</td><td><span class='badge warn'>0.496</span></td><td>1489</td></tr></tbody>
+    </table>
+    <p style="font-size:12px;color:#999;margin-top:10px">
+      Precision = of all predictions for this emotion, how many were correct.<br>
+      Recall = of all real samples of this emotion, how many did the model find.<br>
+      F1-Score = harmonic mean of the two (≥0.70 = good, 0.50-0.70 = ok, &lt;0.50 = needs work).
+    </p>
+  </div>
+
+  <!-- Dataset distribution -->
+  <div class="card">
+    <h2>Dataset emotion distribution</h2>
+    <table>
+      <thead><tr><th>Emotion</th><th>File count</th></tr></thead>
+      <tbody><tr><td>Angry</td><td>1271</td></tr><tr><td>Disgust</td><td>1271</td></tr><tr><td>Fear</td><td>1271</td></tr><tr><td>Happy</td><td>1271</td></tr><tr><td>Neutral</td><td>1087</td></tr><tr><td>Sad</td><td>1271</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Charts -->
+  <div class="card">
+    <h2>Training curves</h2>
+    <p style="font-size:13px;color:#666">
+      Left: loss should go down over epochs. Right: accuracy should go up.
+      If training is much better than validation, the model is overfitting — try more dropout.
+    </p>
+    <img src="training_curves.png" alt="Training curves">
+  </div>
+
+  <div class="card">
+    <h2>Confusion matrix</h2>
+    <p style="font-size:13px;color:#666;margin-bottom:8px">
+      Diagonal = correct predictions. Off-diagonal = the model confused one emotion for another.
+    </p>
+    <img src="confusion_matrix.png" alt="Confusion matrix">
+  </div>
+
+  <!-- Next steps -->
+  
+
+</div>
+</body>
+</html>
